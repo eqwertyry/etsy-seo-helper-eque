@@ -1,11 +1,8 @@
 {
-  "name": "etsy-seo-tool",
+  "name": "etsy-seo-helper",
   "version": "1.0.0",
-  "scripts": {
-    "build": "echo 'Building...'"
-  },
+  "type": "module",
   "dependencies": {
-    "@google/generative-ai": "^0.8.0",
-    "@vercel/postgres": "^0.8.0"
+    "@vercel/postgres": "latest"
   }
 }
