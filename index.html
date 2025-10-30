@@ -505,7 +505,6 @@ body {
 
     <script>class EtsySEOAssistant {
     constructor() {
-        // ⚠️ ВАЖНО: замени на твой реальный домен!
         this.apiBase = 'https://etsy-seo-helper-eque-1-git-main-eqwertyry-s-projects.vercel.app/api';
         this.activationKey = null;
         this.adminKey = 'ADMIN2024';
@@ -515,40 +514,22 @@ body {
     init() {
         this.bindEvents();
         this.checkActivation();
-        this.showAdminKeyInfo();
-    }
-
-    showAdminKeyInfo() {
-        console.log('🔑 Admin key for testing: ADMIN2024');
-        console.log('💡 Use this key to access the application');
-        console.log('🚀 This demo works completely offline with the admin key');
     }
 
     bindEvents() {
-        // Activation
         const activateBtn = document.getElementById('activate-btn');
         const activationKeyInput = document.getElementById('activation-key');
         
         activateBtn.addEventListener('click', () => this.handleActivation());
         activationKeyInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.handleActivation();
-            }
+            if (e.key === 'Enter') this.handleActivation();
         });
 
-        // Main interface
         const analyzeBtn = document.getElementById('analyze-btn');
-        const productTitleInput = document.getElementById('product-title');
         const logoutBtn = document.getElementById('logout-btn');
         const retryBtn = document.getElementById('retry-btn');
 
         analyzeBtn.addEventListener('click', () => this.handleAnalysis());
-        productTitleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                this.handleAnalysis();
-            }
-        });
-        
         logoutBtn.addEventListener('click', () => this.handleLogout());
         retryBtn.addEventListener('click', () => this.handleAnalysis());
     }
@@ -558,8 +539,6 @@ body {
         if (savedKey) {
             this.activationKey = savedKey;
             this.showMainScreen();
-        } else {
-            this.showActivationScreen();
         }
     }
 
@@ -578,7 +557,6 @@ body {
         this.setButtonLoading(activateBtn, true);
         this.clearError(errorDiv);
 
-        // Admin key (offline demo)
         if (key === this.adminKey) {
             this.activationKey = key;
             localStorage.setItem('etsy_seo_activation_key', key);
@@ -587,30 +565,23 @@ body {
             return;
         }
 
-        // ✅ ПРАВИЛЬНЫЙ API CALL ДЛЯ АКТИВАЦИИ
         try {
             const response = await fetch(`${this.apiBase}/verify-key`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    key: key
-                })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({key: key})
             });
 
             const data = await response.json();
-
             if (data.valid) {
                 this.activationKey = key;
                 localStorage.setItem('etsy_seo_activation_key', key);
                 this.showMainScreen();
             } else {
-                this.showError(errorDiv, data.error || 'Invalid activation key');
+                this.showError(errorDiv, data.error || 'Invalid key');
             }
         } catch (error) {
-            console.error('Activation error:', error);
-            this.showError(errorDiv, 'Connection failed. Use "ADMIN2024" for offline demo.');
+            this.showError(errorDiv, 'Connection failed. Use "ADMIN2024" for demo.');
         } finally {
             this.setButtonLoading(activateBtn, false);
         }
@@ -619,12 +590,10 @@ body {
     async handleAnalysis() {
         const productTitleInput = document.getElementById('product-title');
         const analyzeBtn = document.getElementById('analyze-btn');
-        
         const productTitle = productTitleInput.value.trim();
         
         if (!productTitle) {
             alert('Please enter a product title');
-            productTitleInput.focus();
             return;
         }
 
@@ -632,7 +601,6 @@ body {
         this.hideResults();
         this.hideError();
 
-        // Admin key - demo data
         if (this.activationKey === this.adminKey) {
             setTimeout(() => {
                 this.displayDemoResults(productTitle);
@@ -641,31 +609,23 @@ body {
             return;
         }
 
-        // ✅ ПРАВИЛЬНЫЙ API CALL ДЛЯ АНАЛИЗА SEO
         try {
             const response = await fetch(`${this.apiBase}/analyze-seo`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     productTitle: productTitle,
-                    productDescription: "Product description for analysis",
+                    productDescription: "Product description",
                     tags: "handmade, gift, custom",
                     category: "Handmade"
                 })
             });
 
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error('Server error');
             const data = await response.json();
             this.displayAPIResults(data);
             
         } catch (error) {
-            console.error('Analysis error:', error);
-            // Fallback to demo
             setTimeout(() => {
                 this.displayDemoResults(productTitle);
             }, 1000);
@@ -674,145 +634,53 @@ body {
         }
     }
 
-    // ✅ НОВЫЙ МЕТОД ДЛЯ ОБРАБОТКИ API ДАННЫХ
     displayAPIResults(data) {
-        const resultsSection = document.getElementById('results-section');
         const titleResult = document.getElementById('title-result');
         const tagsResult = document.getElementById('tags-result');
         const tipsResult = document.getElementById('tips-result');
 
-        // Обработка данных от нашего Gemini API
         if (data.seo_score) {
-            titleResult.innerHTML = `
-                <strong>SEO Score: ${data.seo_score}/100</strong><br><br>
-                <strong>Title Analysis (${data.title_analysis.score}/10):</strong><br>
-                ✅ <strong>Strengths:</strong> ${data.title_analysis.strengths.join(', ')}<br>
-                💡 <strong>Improvements:</strong> ${data.title_analysis.improvements.join(', ')}
-            `;
-            
-            tagsResult.innerHTML = `
-                <strong>Keyword Suggestions:</strong><br>
-                🔑 <strong>Primary:</strong> ${data.keyword_suggestions.primary.join(', ')}<br>
-                📈 <strong>Long-tail:</strong> ${data.keyword_suggestions.long_tail.join(', ')}<br>
-                🚀 <strong>Trending:</strong> ${data.keyword_suggestions.trending.join(', ')}
-            `;
-            
-            tipsResult.innerHTML = `
-                <strong>Optimization Tips:</strong><br>
-                ${data.optimization_tips.map(tip => `• ${tip}`).join('<br>')}
-            `;
+            titleResult.innerHTML = `<strong>SEO Score: ${data.seo_score}/100</strong>`;
+            tagsResult.innerHTML = `<strong>Keywords:</strong> ${data.keyword_suggestions.primary.join(', ')}`;
+            tipsResult.innerHTML = `<strong>Tips:</strong><br>${data.optimization_tips.map(tip => `• ${tip}`).join('<br>')}`;
         } else {
-            // Если структура другая
-            titleResult.textContent = JSON.stringify(data, null, 2);
+            titleResult.textContent = JSON.stringify(data);
         }
 
-        resultsSection.classList.remove('hidden');
-        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('results-section').classList.remove('hidden');
     }
 
     displayDemoResults(productTitle) {
         const demoData = {
-            title: `Optimized SEO Title: "${productTitle}" - Handmade Premium Quality Gift`,
-            tags: [
-                'handmade',
-                'unique gift',
-                'premium quality',
-                'artisan made',
-                'custom design',
-                'vintage style',
-                'eco friendly',
-                'limited edition',
-                'bestseller',
-                'trending now',
-                'popular choice',
-                'affordable luxury',
-                'perfect gift'
-            ],
-            tips: [
-                '• Place primary keywords at the beginning of your title for maximum SEO impact',
-                '• Include emotional trigger words like "unique", "handmade", "premium" to attract buyers',
-                '• Add specific materials, colors, and dimensions in your product description',
-                '• Use all 13 available tags - mix high-volume and long-tail keywords',
-                '• Include seasonal and gift-related tags to capture holiday shoppers',
-                '• Research competitor pricing and position yourself competitively',
-                '• Upload 10 high-quality photos showing different angles and use cases',
-                '• Encourage customer reviews - they significantly boost search rankings',
-                '• Update your listings regularly to maintain search visibility',
-                '• Use Etsy Ads strategically on your best-performing products'
-            ]
+            title: `Optimized: "${productTitle}" - Handmade Gift`,
+            tags: ['handmade', 'gift', 'unique', 'custom', 'premium'],
+            tips: ['Use keywords in title', 'Add detailed description', 'Use all 13 tags']
         };
-        
         this.displayResults(demoData);
     }
 
     displayResults(data) {
-        const resultsSection = document.getElementById('results-section');
-        const titleResult = document.getElementById('title-result');
-        const tagsResult = document.getElementById('tags-result');
-        const tipsResult = document.getElementById('tips-result');
-
-        if (data.title) {
-            titleResult.textContent = data.title || 'Title not provided';
-        }
-
-        if (data.tags) {
-            const tags = data.tags;
-            if (Array.isArray(tags)) {
-                tagsResult.textContent = tags.join(', ');
-            } else {
-                tagsResult.textContent = tags;
-            }
-        }
-
-        if (data.tips || data.advice) {
-            const tips = data.tips || data.advice;
-            if (Array.isArray(tips)) {
-                tipsResult.textContent = tips.join('\n\n');
-            } else {
-                tipsResult.textContent = tips;
-            }
-        }
-
-        resultsSection.classList.remove('hidden');
-        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById('title-result').textContent = data.title;
+        document.getElementById('tags-result').textContent = data.tags.join(', ');
+        document.getElementById('tips-result').textContent = data.tips.join('\n');
+        document.getElementById('results-section').classList.remove('hidden');
     }
 
     handleLogout() {
-        if (confirm('Are you sure you want to logout? You will need to enter the activation key again.')) {
-            localStorage.removeItem('etsy_seo_activation_key');
-            this.activationKey = null;
-            this.showActivationScreen();
-            this.clearForm();
-        }
+        localStorage.removeItem('etsy_seo_activation_key');
+        this.activationKey = null;
+        this.showActivationScreen();
+        this.clearForm();
     }
 
     showActivationScreen() {
         document.getElementById('activation-screen').classList.remove('hidden');
         document.getElementById('main-screen').classList.add('hidden');
-        document.getElementById('activation-key').focus();
     }
 
     showMainScreen() {
         document.getElementById('activation-screen').classList.add('hidden');
         document.getElementById('main-screen').classList.remove('hidden');
-        document.getElementById('product-title').focus();
-    }
-
-    showErrorSection(message) {
-        const errorSection = document.getElementById('error-section');
-        const errorMessage = document.getElementById('error-message');
-        
-        errorMessage.textContent = message;
-        errorSection.classList.remove('hidden');
-        errorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    hideResults() {
-        document.getElementById('results-section').classList.add('hidden');
-    }
-
-    hideError() {
-        document.getElementById('error-section').classList.add('hidden');
     }
 
     showError(element, message) {
@@ -826,13 +694,16 @@ body {
     }
 
     setButtonLoading(button, loading) {
-        if (loading) {
-            button.classList.add('loading');
-            button.disabled = true;
-        } else {
-            button.classList.remove('loading');
-            button.disabled = false;
-        }
+        button.classList.toggle('loading', loading);
+        button.disabled = loading;
+    }
+
+    hideResults() {
+        document.getElementById('results-section').classList.add('hidden');
+    }
+
+    hideError() {
+        document.getElementById('error-section').classList.add('hidden');
     }
 
     clearForm() {
@@ -840,27 +711,11 @@ body {
         document.getElementById('product-title').value = '';
         this.hideResults();
         this.hideError();
-        this.clearError(document.getElementById('activation-error'));
     }
 }
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🛍️ Etsy SEO Assistant loaded successfully');
-    console.log('🔑 For full demo experience use key: ADMIN2024');
-    console.log('🌟 This application works completely offline with demo data');
+document.addEventListener('DOMContentLoaded', () => {
     new EtsySEOAssistant();
-});
-
-// Handle JavaScript errors
-window.addEventListener('error', function(e) {
-    console.error('JavaScript Error:', e.error);
-});
-
-// Handle unhandled promise rejections
-window.addEventListener('unhandledrejection', function(e) {
-    console.error('Unhandled Promise Rejection:', e.reason);
-    e.preventDefault();
 });</script>
 </body>
 
