@@ -505,9 +505,10 @@ body {
 
     <script>class EtsySEOAssistant {
     constructor() {
-        this.apiUrl = 'https://your-domain.vercel.app/api/analyze';
+        // ⚠️ ВАЖНО: замени на твой реальный домен!
+        this.apiBase = 'https://etsy-seo-helper-eque-1-git-main-eqwertyry-s-projects.vercel.app/api';
         this.activationKey = null;
-        this.adminKey = 'ADMIN2024'; // Admin key for testing
+        this.adminKey = 'ADMIN2024';
         this.init();
     }
 
@@ -518,7 +519,6 @@ body {
     }
 
     showAdminKeyInfo() {
-        // Show admin key info in console
         console.log('🔑 Admin key for testing: ADMIN2024');
         console.log('💡 Use this key to access the application');
         console.log('🚀 This demo works completely offline with the admin key');
@@ -578,7 +578,7 @@ body {
         this.setButtonLoading(activateBtn, true);
         this.clearError(errorDiv);
 
-        // Check admin key first (offline)
+        // Admin key (offline demo)
         if (key === this.adminKey) {
             this.activationKey = key;
             localStorage.setItem('etsy_seo_activation_key', key);
@@ -587,27 +587,26 @@ body {
             return;
         }
 
-        // For non-admin keys, try API but handle failures gracefully
+        // ✅ ПРАВИЛЬНЫЙ API CALL ДЛЯ АКТИВАЦИИ
         try {
-            const response = await fetch(this.apiUrl, {
+            const response = await fetch(`${this.apiBase}/verify-key`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    productTitle: 'test',
                     key: key
                 })
             });
 
-            if (response.ok || response.status === 400) {
+            const data = await response.json();
+
+            if (data.valid) {
                 this.activationKey = key;
                 localStorage.setItem('etsy_seo_activation_key', key);
                 this.showMainScreen();
-            } else if (response.status === 401 || response.status === 403) {
-                this.showError(errorDiv, 'Invalid activation key. Try "ADMIN2024" for demo.');
             } else {
-                this.showError(errorDiv, 'Server error. Use "ADMIN2024" for offline demo.');
+                this.showError(errorDiv, data.error || 'Invalid activation key');
             }
         } catch (error) {
             console.error('Activation error:', error);
@@ -633,9 +632,8 @@ body {
         this.hideResults();
         this.hideError();
 
-        // Always use demo results for better user experience
+        // Admin key - demo data
         if (this.activationKey === this.adminKey) {
-            // Admin key - show comprehensive demo
             setTimeout(() => {
                 this.displayDemoResults(productTitle);
                 this.setButtonLoading(analyzeBtn, false);
@@ -643,37 +641,73 @@ body {
             return;
         }
 
-        // For other keys, try API but fallback to demo on error
+        // ✅ ПРАВИЛЬНЫЙ API CALL ДЛЯ АНАЛИЗА SEO
         try {
-            const response = await fetch(this.apiUrl, {
+            const response = await fetch(`${this.apiBase}/analyze-seo`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     productTitle: productTitle,
-                    key: this.activationKey
+                    productDescription: "Product description for analysis",
+                    tags: "handmade, gift, custom",
+                    category: "Handmade"
                 })
             });
 
             if (!response.ok) {
-                throw new Error(`Server responded with status: ${response.status}`);
+                throw new Error(`Server error: ${response.status}`);
             }
 
             const data = await response.json();
-            this.displayResults(data);
+            this.displayAPIResults(data);
             
         } catch (error) {
             console.error('Analysis error:', error);
-            // Fallback to demo results instead of showing error
+            // Fallback to demo
             setTimeout(() => {
                 this.displayDemoResults(productTitle);
-                this.setButtonLoading(analyzeBtn, false);
             }, 1000);
-            return;
         } finally {
             this.setButtonLoading(analyzeBtn, false);
         }
+    }
+
+    // ✅ НОВЫЙ МЕТОД ДЛЯ ОБРАБОТКИ API ДАННЫХ
+    displayAPIResults(data) {
+        const resultsSection = document.getElementById('results-section');
+        const titleResult = document.getElementById('title-result');
+        const tagsResult = document.getElementById('tags-result');
+        const tipsResult = document.getElementById('tips-result');
+
+        // Обработка данных от нашего Gemini API
+        if (data.seo_score) {
+            titleResult.innerHTML = `
+                <strong>SEO Score: ${data.seo_score}/100</strong><br><br>
+                <strong>Title Analysis (${data.title_analysis.score}/10):</strong><br>
+                ✅ <strong>Strengths:</strong> ${data.title_analysis.strengths.join(', ')}<br>
+                💡 <strong>Improvements:</strong> ${data.title_analysis.improvements.join(', ')}
+            `;
+            
+            tagsResult.innerHTML = `
+                <strong>Keyword Suggestions:</strong><br>
+                🔑 <strong>Primary:</strong> ${data.keyword_suggestions.primary.join(', ')}<br>
+                📈 <strong>Long-tail:</strong> ${data.keyword_suggestions.long_tail.join(', ')}<br>
+                🚀 <strong>Trending:</strong> ${data.keyword_suggestions.trending.join(', ')}
+            `;
+            
+            tipsResult.innerHTML = `
+                <strong>Optimization Tips:</strong><br>
+                ${data.optimization_tips.map(tip => `• ${tip}`).join('<br>')}
+            `;
+        } else {
+            // Если структура другая
+            titleResult.textContent = JSON.stringify(data, null, 2);
+        }
+
+        resultsSection.classList.remove('hidden');
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     displayDemoResults(productTitle) {
@@ -711,34 +745,12 @@ body {
         this.displayResults(demoData);
     }
 
-    handleLogout() {
-        if (confirm('Are you sure you want to logout? You will need to enter the activation key again.')) {
-            localStorage.removeItem('etsy_seo_activation_key');
-            this.activationKey = null;
-            this.showActivationScreen();
-            this.clearForm();
-        }
-    }
-
-    showActivationScreen() {
-        document.getElementById('activation-screen').classList.remove('hidden');
-        document.getElementById('main-screen').classList.add('hidden');
-        document.getElementById('activation-key').focus();
-    }
-
-    showMainScreen() {
-        document.getElementById('activation-screen').classList.add('hidden');
-        document.getElementById('main-screen').classList.remove('hidden');
-        document.getElementById('product-title').focus();
-    }
-
     displayResults(data) {
         const resultsSection = document.getElementById('results-section');
         const titleResult = document.getElementById('title-result');
         const tagsResult = document.getElementById('tags-result');
         const tipsResult = document.getElementById('tips-result');
 
-        // Handle results depending on API response structure
         if (data.title) {
             titleResult.textContent = data.title || 'Title not provided';
         }
@@ -761,22 +773,29 @@ body {
             }
         }
 
-        // If API returns different structure, try to handle general case
-        if (!data.title && !data.tags && !data.tips) {
-            if (data.result) {
-                titleResult.textContent = data.result.title || 'Not specified';
-                tagsResult.textContent = Array.isArray(data.result.tags) ? data.result.tags.join(', ') : (data.result.tags || 'Not specified');
-                tipsResult.textContent = Array.isArray(data.result.tips) ? data.result.tips.join('\n\n') : (data.result.tips || 'Not specified');
-            } else {
-                // Show entire response as is
-                titleResult.textContent = JSON.stringify(data, null, 2);
-                tagsResult.textContent = 'See above';
-                tipsResult.textContent = 'See above';
-            }
-        }
-
         resultsSection.classList.remove('hidden');
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    handleLogout() {
+        if (confirm('Are you sure you want to logout? You will need to enter the activation key again.')) {
+            localStorage.removeItem('etsy_seo_activation_key');
+            this.activationKey = null;
+            this.showActivationScreen();
+            this.clearForm();
+        }
+    }
+
+    showActivationScreen() {
+        document.getElementById('activation-screen').classList.remove('hidden');
+        document.getElementById('main-screen').classList.add('hidden');
+        document.getElementById('activation-key').focus();
+    }
+
+    showMainScreen() {
+        document.getElementById('activation-screen').classList.add('hidden');
+        document.getElementById('main-screen').classList.remove('hidden');
+        document.getElementById('product-title').focus();
     }
 
     showErrorSection(message) {
@@ -841,7 +860,7 @@ window.addEventListener('error', function(e) {
 // Handle unhandled promise rejections
 window.addEventListener('unhandledrejection', function(e) {
     console.error('Unhandled Promise Rejection:', e.reason);
-    e.preventDefault(); // Prevent the error from showing in console
+    e.preventDefault();
 });</script>
 </body>
 
