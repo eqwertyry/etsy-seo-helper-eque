@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     await client.connect();
 
     const result = await client.query(
-      'SELECT key, is_used FROM seo_keys WHERE key = $1 LIMIT 1',
+      'SELECT key, is_used FROM activation_keys WHERE key = $1 LIMIT 1',
       [key]
     );
 
@@ -46,3 +46,4 @@ export default async function handler(req, res) {
     await client.end();
   }
 }
+
