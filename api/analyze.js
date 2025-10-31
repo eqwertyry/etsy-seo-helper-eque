@@ -23,7 +23,7 @@ export default async function handler(req, res) {
   try {
     // Проверяем ключ в базе
     const keyResult = await sql`
-      SELECT key, is_used FROM activation_keys
+      SELECT key, is_used FROM activation_key
       WHERE key = ${key}
     `;
 
@@ -46,3 +46,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Ошибка сервера' });
   }
 }
+
