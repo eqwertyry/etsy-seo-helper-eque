@@ -17,19 +17,29 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Парсим тело запроса (req.body может быть строкой на Vercel)
-    const { productTitle, key } =
-      typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    // ✅ Парсим тело запроса
+    let body;
+    try {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    } catch (parseError) {
+      return res.status(400).json({ error: 'Invalid JSON in request body' });
+    }
+
+    const { key } = body;
 
     if (!key) {
       return res.status(400).json({ error: 'Ключ обязателен' });
     }
 
-    // ✅ Проверяем ключ
+    console.log('Checking key:', key);
+
+    // ✅ Проверяем ключ - исправляем название таблицы
     const keyResult = await sql`
       SELECT key, is_used FROM activation_key
       WHERE key = ${key}
     `;
+
+    console.log('Key result:', keyResult.rows);
 
     if (keyResult.rows.length === 0) {
       return res.status(401).json({ error: '❌ Неверный ключ активации' });
@@ -39,13 +49,25 @@ export default async function handler(req, res) {
       return res.status(401).json({ error: '⚠️ Ключ уже использован' });
     }
 
+    // ✅ Активируем ключ
+    await sql`
+      UPDATE seo_keys 
+      SET is_used = true, used_at = NOW()
+      WHERE key = ${key}
+    `;
+
     // ✅ Всё ок
     return res.status(200).json({
       valid: true,
       message: '✅ Ключ активирован!',
     });
+
   } catch (error) {
     console.error('Activation error:', error);
-    return res.status(500).json({ error: 'Ошибка сервера', details: error.message });
+    return res.status(500).json({ 
+      error: 'Ошибка сервера', 
+      details: error.message,
+      stack: error.stack 
+    });
   }
 }
