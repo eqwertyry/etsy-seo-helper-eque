@@ -34,10 +34,10 @@ export default async function handler(req, res) {
     console.log('Checking key:', key);
 
     // ✅ Проверяем ключ - исправляем название таблицы
-    const keyResult = await sql`
-      SELECT key, is_used FROM activation_key
-      WHERE key = ${key}
-    `;
+   const keyResult = await sql `
+  SELECT activation_key, is_used FROM activation_keys 
+  WHERE activation_key = ${key} 
+ `;                  
 
     console.log('Key result:', keyResult.rows);
 
