@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://public-frontend-cos.metadl.com/mgx/img/favicon.png" type="image/png">
+    <title>Etsy SEO Assistant</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #64748b;
+            --secondary-hover: #475569;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --border-radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --logo-color: #e11d48;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .activation-card {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            color: var(--logo-color);
+            text-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+        }
+
+        .logo p {
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        #main-screen {
+            align-items: flex-start;
+            padding-top: 40px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--surface-color);
+            padding: 20px 24px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .app-header h1 {
+            font-size: 1.5rem;
+            color: var(--logo-color);
+            text-shadow: 0 2px 4px rgba(225, 29, 72, 0.2);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .input-section {
+            background: var(--surface-color);
+            padding: 32px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .input-group input,
+        .input-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            background: var(--surface-color);
+            color: var(--text-primary);
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            min-height: 48px;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--secondary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-loader {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        .btn.loading .btn-text {
+            opacity: 0.7;
+        }
+
+        .btn.loading .btn-loader {
+            display: block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .results-section {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .results-card {
+            padding: 32px;
+        }
+
+        .results-card h2 {
+            margin-bottom: 24px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .result-block {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-block:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .result-block h3 {
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .result-content {
+            color: var(--text-secondary);
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        .error-section {
+            background: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .error-card {
+            padding: 32px;
+            text-align: center;
+        }
+
+        .error-card h3 {
+            color: var(--error-color);
+            margin-bottom: 16px;
+        }
+
+        .error-card p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-top: 8px;
+            min-height: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .screen {
+                padding: 16px;
+            }
+            
+            .activation-card {
+                padding: 24px;
+            }
+            
+            .app-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            
+            .app-header h1 {
+                font-size: 1.25rem;
+            }
+            
+            .input-section,
+            .results-card,
+            .error-card {
+                padding: 24px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Activation Screen -->
+    <div id="activation-screen" class="screen">
+        <div class="container">
+            <div class="activation-card">
+                <div class="logo">
+                    <h1>Etsy SEO Assistant</h1>
+                    <p>Optimize your products for better visibility</p>
+                </div>
+                
+                <div class="activation-form">
+                    <div class="input-group">
+                        <label for="activation-key">Activation Key</label>
+                        <input type="text" id="activation-key" placeholder="Enter your activation key" />
+                        <div id="activation-error" class="error-message"></div>
+                    </div>
+                    
+                    <button id="activate-btn" class="btn btn-primary">
+                        <span class="btn-text">Activate</span>
+                        <div class="btn-loader"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Interface -->
+    <div id="main-screen" class="screen hidden">
+        <div class="container">
+            <header class="app-header">
+                <h1>Etsy SEO Assistant</h1>
+                <button id="logout-btn" class="btn btn-secondary">Logout</button>
+            </header>
+
+            <div class="main-content">
+                <div class="input-section">
+                    <div class="input-group">
+                        <label for="product-title">Product Title</label>
+                        <textarea 
+                            id="product-title" 
+                            placeholder="Enter your product title for SEO analysis..."
+                            rows="3"
+                        ></textarea>
+                    </div>
+                    
+                    <button id="analyze-btn" class="btn btn-primary">
+                        <span class="btn-text">Analyze SEO</span>
+                        <div class="btn-loader"></div>
+                    </button>
+                </div>
+
+                <div id="results-section" class="results-section hidden">
+                    <div class="results-card">
+                        <h2>Analysis Results</h2>
+                        
+                        <div class="result-block">
+                            <h3>📝 SEO Score & Analysis</h3>
+                            <div id="title-result" class="result-content"></div>
+                        </div>
+                        
+                        <div class="result-block">
+                            <h3>🏷️ Keyword Suggestions</h3>
+                            <div id="tags-result" class="result-content"></div>
+                        </div>
+                        
+                        <div class="result-block">
+                            <h3>💡 Optimization Tips</h3>
+                            <div id="tips-result" class="result-content"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="error-section" class="error-section hidden">
+                    <div class="error-card">
+                        <h3>❌ Error</h3>
+                        <p id="error-message"></p>
+                        <button id="retry-btn" class="btn btn-secondary">Try Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class EtsySEOAssistant {
+            constructor() {
+                this.activationApiUrl = 'https://etsy-seo-helper-eque-1.vercel.app/api/analyze';
+                this.analyzeApiUrl = 'https://etsy-seo-helper-eque-1.vercel.app/api/analyze-seo';
+                this.activationKey = null;
+                this.init();
+            }
+
+            init() {
+                this.bindEvents();
+                this.checkActivation();
+            }
+
+            bindEvents() {
+                const activateBtn = document.getElementById('activate-btn');
+                const activationKeyInput = document.getElementById('activation-key');
+                const analyzeBtn = document.getElementById('analyze-btn');
+                const productTitleInput = document.getElementById('product-title');
+                const logoutBtn = document.getElementById('logout-btn');
+                const retryBtn = document.getElementById('retry-btn');
+
+                activateBtn.addEventListener('click', () => this.handleActivation());
+                activationKeyInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleActivation();
+                });
+
+                analyzeBtn.addEventListener('click', () => this.handleAnalysis());
+                productTitleInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) this.handleAnalysis();
+                });
+                
+                logoutBtn.addEventListener('click', () => this.handleLogout());
+                retryBtn.addEventListener('click', () => this.handleAnalysis());
+            }
+
+            checkActivation() {
+                const savedKey = localStorage.getItem('etsy_seo_activation_key');
+                if (savedKey) {
+                    this.activationKey = savedKey;
+                    this.showMainScreen();
+                } else {
+                    this.showActivationScreen();
+                }
+            }
+
+            async handleActivation() {
+                const keyInput = document.getElementById('activation-key');
+                const activateBtn = document.getElementById('activate-btn');
+                const errorDiv = document.getElementById('activation-error');
+                
+                const key = keyInput.value.trim();
+                
+                if (!key) {
+                    this.showError(errorDiv, 'Please enter an activation key');
+                    return;
+                }
+
+                this.setButtonLoading(activateBtn, true);
+                this.clearError(errorDiv);
+
+                try {
+                    const response = await fetch(this.activationApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            productTitle: 'test',
+                            key: key
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.valid) {
+                        this.activationKey = key;
+                        localStorage.setItem('etsy_seo_activation_key', key);
+                        this.showMainScreen();
+                    } else {
+                        this.showError(errorDiv, data.error || 'Invalid activation key');
+                    }
+                } catch (error) {
+                    console.error('Activation error:', error);
+                    this.showError(errorDiv, 'Connection failed. Please check your internet connection.');
+                } finally {
+                    this.setButtonLoading(activateBtn, false);
+                }
+            }
+
+            async handleAnalysis() {
+                const productTitleInput = document.getElementById('product-title');
+                const analyzeBtn = document.getElementById('analyze-btn');
+                
+                const productTitle = productTitleInput.value.trim();
+                
+                if (!productTitle) {
+                    alert('Please enter a product title');
+                    productTitleInput.focus();
+                    return;
+                }
+
+                this.setButtonLoading(analyzeBtn, true);
+                this.hideResults();
+                this.hideError();
+
+                try {
+                    const response = await fetch(this.analyzeApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            productTitle: productTitle,
+                            productDescription: "Product for SEO analysis",
+                            tags: [],
+                            category: "Handmade"
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.displayResults(data);
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    this.showErrorSection('Failed to analyze product title. Please try again.');
+                } finally {
+                    this.setButtonLoading(analyzeBtn, false);
+                }
+            }
+
+            handleLogout() {
+                if (confirm('Are you sure you want to logout? You will need to enter the activation key again.')) {
+                    localStorage.removeItem('etsy_seo_activation_key');
+                    this.activationKey = null;
+                    this.showActivationScreen();
+                    this.clearForm();
+                }
+            }
+
+            showActivationScreen() {
+                document.getElementById('activation-screen').classList.remove('hidden');
+                document.getElementById('main-screen').classList.add('hidden');
+                document.getElementById('activation-key').focus();
+            }
+
+            showMainScreen() {
+                document.getElementById('activation-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+                document.getElementById('product-title').focus();
+            }
+
+            displayResults(data) {
+                const resultsSection = document.getElementById('results-section');
+                const titleResult = document.getElementById('title-result');
+                const tagsResult = document.getElementById('tags-result');
+                const tipsResult = document.getElementById('tips-result');
+
+                if (data.seo_score) {
+                    titleResult.textContent = `SEO Score: ${data.seo_score}/100\n\nTitle Analysis:\n- Score: ${data.title_analysis?.score || 'N/A'}/10\n- Strengths: ${(data.title_analysis?.strengths || []).join(', ')}\n- Improvements: ${(data.title_analysis?.improvements || []).join(', ')}`;
+                    
+                    const allTags = [
+                        ...(data.keyword_suggestions?.primary || []),
+                        ...(data.keyword_suggestions?.long_tail || []),
+                        ...(data.keyword_suggestions?.trending || [])
+                    ];
+                    tagsResult.textContent = allTags.join(', ') || 'No keywords suggested';
+                    
+                    tipsResult.textContent = (data.optimization_tips || []).join('\n\n') || 'No optimization tips';
+                } else {
+                    titleResult.textContent = JSON.stringify(data, null, 2);
+                }
+
+                resultsSection.classList.remove('hidden');
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            showErrorSection(message) {
+                const errorSection = document.getElementById('error-section');
+                const errorMessage = document.getElementById('error-message');
+                
+                errorMessage.textContent = message;
+                errorSection.classList.remove('hidden');
+                errorSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            hideResults() {
+                document.getElementById('results-section').classList.add('hidden');
+            }
+
+            hideError() {
+                document.getElementById('error-section').classList.add('hidden');
+            }
+
+            showError(element, message) {
+                element.textContent = message;
+                element.style.display = 'block';
+            }
+
+            clearError(element) {
+                element.textContent = '';
+                element.style.display = 'none';
+            }
+
+            setButtonLoading(button, loading) {
+                if (loading) {
+                    button.classList.add('loading');
+                    button.disabled = true;
+                } else {
+                    button.classList.remove('loading');
+                    button.disabled = false;
+                }
+            }
+
+            clearForm() {
+                document.getElementById('activation-key').value = '';
+                document.getElementById('product-title').value = '';
+                this.hideResults();
+                this.hideError();
+                this.clearError(document.getElementById('activation-error'));
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Etsy SEO Assistant loaded successfully');
+            new EtsySEOAssistant();
+        });
+    </script>
+</body>
+</html>
