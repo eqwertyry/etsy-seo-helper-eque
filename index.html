@@ -148,7 +148,7 @@ class EtsySEOAssistant {
         body: JSON.stringify({key:key})
       });
       const data = await response.json();
-      if(response.ok && data.valid){
+      if(response.ok && data.success){   // ← исправлено!
         this.activationKey = key;
         localStorage.setItem('etsy_seo_activation_key', key);
         this.showMainScreen();
@@ -175,10 +175,7 @@ class EtsySEOAssistant {
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
           key:this.activationKey,
-          productTitle: productTitle,
-          productDescription:"Product description for SEO analysis",
-          tags:[],
-          category:"Handmade"
+          productTitle: productTitle
         })
       });
       if(!response.ok) throw new Error('Server returned '+response.status);
